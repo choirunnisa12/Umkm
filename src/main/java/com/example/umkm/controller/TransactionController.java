@@ -5,13 +5,14 @@ import com.example.umkm.entity.Transaction;
 import com.example.umkm.repository.ProductRepository;
 import com.example.umkm.repository.TransactionRepository;
 import com.example.umkm.service.TransactionService;
+import lombok.Data;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Optional;
-
+@Data
 @RestController
 @RequestMapping("/transactions")
 public class TransactionController {
@@ -20,11 +21,20 @@ public class TransactionController {
     private TransactionRepository transactionRepository;
     private Transaction transaction;
 
+    public TransactionController(TransactionService transactionService,
+                                 ProductRepository productRepository,
+                                 TransactionRepository transactionRepository) {
+        this.transactionService = transactionService;
+        this.productRepository = productRepository;
+        this.transactionRepository = transactionRepository;
+    }
     @PostMapping
-    public ResponseEntity<Transaction> create(@RequestBody Transaction transaction, @RequestParam Integer productId) {
-        Transaction create = transactionService.create(transaction, productId);
+    public ResponseEntity<Transaction> create(@RequestBody Transaction request) {
+        Integer productId = request.getProduct().getId(); // Assuming you have a getter for productId in Transaction class
+        Transaction create = transactionService.create(request, productId);
         return create != null ? ResponseEntity.ok(create) : ResponseEntity.badRequest().build();
     }
+
 
     @GetMapping
     public List<Transaction> getAll() {
@@ -38,7 +48,7 @@ public class TransactionController {
     }
 
     @PutMapping
-    public ResponseEntity<Transaction> update(@RequestBody Transaction transaction) {
+    public ResponseEntity<Transaction> update(@RequestBody Transaction request) {
         Transaction updatedTransaction = transactionService.update(transaction);
         return updatedTransaction != null ? ResponseEntity.ok(updatedTransaction) : ResponseEntity.notFound().build();
     }
