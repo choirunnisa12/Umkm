@@ -9,10 +9,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Integer> {
-    List<Product> findByNameContaining(String name);
-    @Query(value = "SELECT * FROM Product p WHERE p.stock < :stockThreshold", nativeQuery = true)
-    List<Product> findLowStockProducts(@Param("stockThreshold") Integer stockThreshold);
+    List<Product> findByNameContainingIgnoreCase(String name);
 
-    @Query(value = "SELECT * FROM Product p WHERE p.expiry_date < :expiryDate", nativeQuery = true)
-    List<Product> findExpiringProducts(@Param("expiryDate") LocalDate expiryDate);
+    @Query(value = "SELECT * FROM Product p WHERE p.stock < :stockThreshold", nativeQuery = true)
+    List<Product> findByStockLessThan(@Param("stockThreshold") Integer stockThreshold);
+
+    @Query(value = "SELECT * FROM Product p WHERE p.expire_date < :thresholdDate", nativeQuery = true)
+    List<Product> findByExpireDateBefore(@Param("thresholdDate") LocalDate thresholdDate);
 }

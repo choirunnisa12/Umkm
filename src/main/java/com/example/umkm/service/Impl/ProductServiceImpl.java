@@ -32,12 +32,15 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));    }
 
     @Override
-    public Product update(Product request) {
-        Product existingProduct = this.getById(request.getId());
-        existingProduct.setName(request.getName());
-        existingProduct.setPrice(request.getPrice());
-        existingProduct.setStock(request.getStock());
-        return productRepository.save(existingProduct);    }
+    public Product update(Integer id, Product request) {
+            Product existingProduct = this.getById(id);
+            existingProduct.setName(request.getName());
+            existingProduct.setPrice(request.getPrice());
+            existingProduct.setStock(request.getStock());
+            existingProduct.setExpireDate(request.getExpireDate());
+            return productRepository.save(existingProduct);
+
+      }
 
     @Override
     public void delete(Integer id) {
@@ -47,12 +50,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<Product> getExpiringProducts(LocalDate thresholdDate) {
-        return List.of();
+        return productRepository.findByExpireDateBefore(thresholdDate);
     }
 
     @Override
-    public List<Product> searchProducts(String name) {
-        return productRepository.findByNameContaining(name);
+    public List<Product> search(String name) {
+        return productRepository.findByNameContainingIgnoreCase(name);
     }
 
     @Override

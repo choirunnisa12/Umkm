@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -38,13 +39,30 @@ public class ProductController {
     }
 
     @PutMapping(path = "/{id}")
-    public Product update(@RequestBody Product request) {
-        return productService.update(request);
+    public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody Product request) {
+        Product update = productService.update(id, request);
+        return ResponseEntity.ok(update);
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
         productService.delete(id);
         return ResponseEntity.ok("Product deleted successfully");
+    }
+    @GetMapping("/expiring")
+    public List<Product> getExpiringProducts(@RequestParam("thresholdDate") String thresholdDate) {
+        LocalDate date = LocalDate.parse(thresholdDate);
+        return productService.getExpiringProducts(date);
+    }
+
+    @GetMapping("/search")
+    public List<Product> search(@RequestParam("name") String name) {
+        return productService.search(name);
+    }
+
+    @GetMapping("/lowstock")
+    public List<Product> findByStockLessThan(@RequestParam("stockThreshold") Integer stockThreshold) {
+        return productService.getLowStockProducts(stockThreshold);
     }
 }
