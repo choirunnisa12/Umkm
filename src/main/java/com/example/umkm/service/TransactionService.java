@@ -1,13 +1,14 @@
 package com.example.umkm.service;
 
+import com.example.umkm.dto.request.TransactionRequest;
 import com.example.umkm.entity.Transaction;
 
 import java.util.List;
 
 public interface TransactionService {
-    Transaction create(Transaction request, Integer productId);
-    List<Transaction> getAll();
-    Transaction getById(Integer id);
+    Transaction create(TransactionRequest request);
+    List<Transaction> findAll();
     Transaction update(Transaction request);
-    void delete(Integer id);
+    void delete(int id);
+
 }

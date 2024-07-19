@@ -1,9 +1,12 @@
 package com.example.umkm.service.Impl;
 
+import com.example.umkm.dto.request.TransactionRequest;
 import com.example.umkm.entity.Product;
 import com.example.umkm.entity.Transaction;
+import com.example.umkm.entity.Wallet;
 import com.example.umkm.repository.ProductRepository;
 import com.example.umkm.repository.TransactionRepository;
+import com.example.umkm.repository.WalletRepository;
 import com.example.umkm.service.TransactionService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,49 +20,53 @@ import java.util.Optional;
 public class TransactionServiceImpl implements TransactionService {
     private TransactionRepository transactionRepository;
     private ProductRepository productRepository;
+    private WalletRepository walletRepository;
 
     @Override
-    public Transaction create(Transaction request, Integer productId) {
-        Optional<Product> productOpt = productRepository.findById(productId);
-        if (productOpt.isPresent()) {
-            Product product = productOpt.get();
-            request.setProduct(product);
-            request.setTotalPrice(request.getPrice() * request.getQuantity());
+    public Transaction create(TransactionRequest request) {
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new RuntimeException("Product not found"));
 
-            // Update product stock
-            product.setStock(product.getStock() - request.getQuantity());
-            productRepository.save(product);
-
-            return transactionRepository.save(request);
+        if (product.getStock() < request.getQuantity()) {
+            throw new RuntimeException("Not enough stock");
         }
-        return null;    }
 
-    @Override
-    public List<Transaction> getAll() {
-        return transactionRepository.findAll();
+        Transaction transaction = new Transaction();
+        transaction.setPrice(request.getPrice());
+        transaction.setQuantity(request.getQuantity());
+        transaction.setTotalPrice(request.getTotalPrice());
+        transaction.setDescription(request.getDescription());
+        transaction.setDateTransaction(request.getDateTransaction());
+        transaction.setProduct(product);
+
+        transactionRepository.save(transaction);
+
+        product.setStock(product.getStock() - request.getQuantity());
+        productRepository.save(product);
+    return null;
     }
 
     @Override
-    public Transaction getById(Integer id) {
-        return transactionRepository.findById(id).orElse(null);
+    public List<Transaction> findAll() {
+        return transactionRepository.findAll();
     }
 
     @Override
     public Transaction update(Transaction request) {
         Optional<Transaction> transactionOpt = transactionRepository.findById(request.getId());
-        if (transactionOpt.isPresent()) {
-            Transaction existingTransaction = transactionOpt.get();
-            existingTransaction.setPrice(request.getPrice());
-            existingTransaction.setQuantity(request.getQuantity());
-            existingTransaction.setTotalPrice(request.getPrice() * request.getQuantity());
-            existingTransaction.setProduct(request.getProduct());
-            return transactionRepository.save(existingTransaction);
+        if (transactionOpt.isEmpty()) {
+            throw new RuntimeException("Transaction not found"); // Handle transaction not found scenario
         }
-        return null;
+        Transaction existingTransaction = transactionOpt.get();
+        existingTransaction.setPrice(request.getPrice());
+        existingTransaction.setQuantity(request.getQuantity());
+        existingTransaction.setTotalPrice(request.getPrice() * request.getQuantity());
+        existingTransaction.setProduct(request.getProduct());
+        return transactionRepository.save(existingTransaction);
     }
 
     @Override
-    public void delete(Integer id) {
+    public void delete(int id) {
         Optional<Transaction> transactionOpt = transactionRepository.findById(id);
         if (transactionOpt.isPresent()) {
             Transaction transaction = transactionOpt.get();
@@ -67,6 +74,8 @@ public class TransactionServiceImpl implements TransactionService {
             product.setStock(product.getStock() + transaction.getQuantity()); // Restock product
             productRepository.save(product);
             transactionRepository.delete(transaction);
+        } else {
+            throw new RuntimeException("Transaction not found"); // Handle transaction not found scenario
         }
     }
 }

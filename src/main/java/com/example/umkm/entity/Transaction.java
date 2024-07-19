@@ -1,17 +1,18 @@
 package com.example.umkm.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
-@Data
+import java.time.LocalDate;
+@Builder
+@Table(name = "transactions")
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "transactions")
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,10 +21,15 @@ public class Transaction {
     private Integer quantity;
     private Integer totalPrice;
     private String description;
+    private LocalDate dateTransaction;
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
+    @ManyToOne
+    @JoinColumn(name = "wallet_id")
+    private Wallet wallet;
 
     @PrePersist
     public void prePersist() {
