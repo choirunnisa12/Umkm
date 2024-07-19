@@ -1,47 +1,47 @@
 package com.example.umkm.controller;
-
 import com.example.umkm.dto.request.TransactionRequest;
-import com.example.umkm.entity.Product;
 import com.example.umkm.entity.Transaction;
-import com.example.umkm.repository.ProductRepository;
-import com.example.umkm.repository.TransactionRepository;
 import com.example.umkm.service.TransactionService;
-import com.example.umkm.utils.WebResponse;
-
 import lombok.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.Optional;
 
-@Data
+import java.util.List;
+
 @RestController
-@RequestMapping("/transactions")
+@RequestMapping("transactions")
+@AllArgsConstructor
 public class TransactionController {
-    private  TransactionService transactionService;
-    private  ProductRepository productRepository;
-    private  TransactionRepository transactionRepository;
-    private  Transaction transaction;
+    private final TransactionService transactionService;
+
 
     @PostMapping
-    public Transaction create(@RequestBody TransactionRequest request) {
-        return transactionService.create(request);
-    }
-    @GetMapping
-    public List<Transaction> getAll() {
-        return transactionService.findAll();
+    public ResponseEntity<Transaction> create(@RequestBody TransactionRequest transactionRequest) {
+        Transaction create = transactionService.create(transactionRequest);
+        return ResponseEntity.ok(create);
     }
 
-    @PutMapping
-    public ResponseEntity<Transaction> update(@RequestBody Transaction request) {
-        Transaction update = transactionService.update(transaction);
-        return update != null ? ResponseEntity.ok(update) : ResponseEntity.notFound().build();
+    @GetMapping
+    public ResponseEntity<List<TransactionRequest>> getAll() {
+        List<TransactionRequest> transactions = transactionService.getAll();
+        return ResponseEntity.ok(transactions);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TransactionRequest> getById(@PathVariable int id) {
+        TransactionRequest transactionRequest = transactionService.getById(id);
+        return ResponseEntity.ok(transactionRequest);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<TransactionRequest> update(@PathVariable int id, @RequestBody TransactionRequest transactionRequest) {
+        TransactionRequest update = transactionService.update(id, transactionRequest);
+        return ResponseEntity.ok(update);
     }
 
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable int id) {
+    public ResponseEntity<Void> delete(@PathVariable int id) {
         transactionService.delete(id);
-        return "Transaction successfully deleted";
-
+        return ResponseEntity.noContent().build();
     }
 }

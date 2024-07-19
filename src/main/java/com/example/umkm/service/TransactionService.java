@@ -6,9 +6,10 @@ import com.example.umkm.entity.Transaction;
 import java.util.List;
 
 public interface TransactionService {
-    Transaction create(TransactionRequest request);
-    List<Transaction> findAll();
-    Transaction update(Transaction request);
+    Transaction create(TransactionRequest transactionRequest);
+    List<TransactionRequest> getAll();
+    TransactionRequest getById(int id);
+    TransactionRequest update(int id,TransactionRequest transactionRequest);
     void delete(int id);
 
 }

@@ -14,55 +14,79 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
     private TransactionRepository transactionRepository;
     private ProductRepository productRepository;
-    private WalletRepository walletRepository;
 
     @Override
-    public Transaction create(TransactionRequest request) {
-        Product product = productRepository.findById(request.getProductId())
+    public Transaction create(TransactionRequest transactionRequest) {
+        Product product = productRepository.findById(transactionRequest.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        if (product.getStock() < request.getQuantity()) {
-            throw new RuntimeException("Not enough stock");
+        // Buat transaksi dengan produk
+        Transaction transaction = transactionRequest.create(product);
+
+        // Periksa stok produk
+        if (product.getStock() < transaction.getQuantity()) {
+            throw new RuntimeException("Insufficient stock");
         }
 
-        Transaction transaction = new Transaction();
-        transaction.setPrice(request.getPrice());
-        transaction.setQuantity(request.getQuantity());
-        transaction.setTotalPrice(request.getTotalPrice());
-        transaction.setDescription(request.getDescription());
-        transaction.setDateTransaction(request.getDateTransaction());
-        transaction.setProduct(product);
+        // Kurangi stok produk
+        product.setStock(product.getStock() - transaction.getQuantity());
+        productRepository.save(product);
 
+        // Simpan transaksi
+        return transactionRepository.save(transaction);
+
+}
+
+    @Override
+    public List<TransactionRequest> getAll() {
+        return transactionRepository.findAll().stream()
+                .map(transaction -> new TransactionRequest(
+                        transaction.getPrice(),
+                        transaction.getQuantity(),
+                        transaction.getTotalPrice(),
+                        transaction.getDescription(),
+                        transaction.getDateTransaction(),
+                        transaction.getProduct().getId()
+                ))
+                .collect(Collectors.toList());    }
+
+    @Override
+    public TransactionRequest getById(int id) {
+        Transaction transaction = transactionRepository.findById(id).orElseThrow();
+        return new TransactionRequest(
+                transaction.getPrice(),
+                transaction.getQuantity(),
+                transaction.getTotalPrice(),
+                transaction.getDescription(),
+                transaction.getDateTransaction(),
+                transaction.getProduct().getId()
+        );
+    }
+
+    @Override
+    public TransactionRequest update(int id, TransactionRequest transactionRequest) {
+        Transaction transaction = transactionRepository.findById(id).orElseThrow();
+        transaction.setPrice(transactionRequest.getPrice());
+        transaction.setQuantity(transactionRequest.getQuantity());
+        transaction.setTotalPrice(transactionRequest.getTotalPrice());
+        transaction.setDescription(transactionRequest.getDescription());
+        transaction.setDateTransaction(transactionRequest.getDateTransaction());
+
+        Product product = productRepository.findById(transactionRequest.getProductId()).orElseThrow();
+        product.setStock(product.getStock() - transactionRequest.getQuantity());
+        productRepository.save(product);
+
+        transaction.setProduct(product);
         transactionRepository.save(transaction);
 
-        product.setStock(product.getStock() - request.getQuantity());
-        productRepository.save(product);
-    return null;
-    }
-
-    @Override
-    public List<Transaction> findAll() {
-        return transactionRepository.findAll();
-    }
-
-    @Override
-    public Transaction update(Transaction request) {
-        Optional<Transaction> transactionOpt = transactionRepository.findById(request.getId());
-        if (transactionOpt.isEmpty()) {
-            throw new RuntimeException("Transaction not found"); // Handle transaction not found scenario
-        }
-        Transaction existingTransaction = transactionOpt.get();
-        existingTransaction.setPrice(request.getPrice());
-        existingTransaction.setQuantity(request.getQuantity());
-        existingTransaction.setTotalPrice(request.getPrice() * request.getQuantity());
-        existingTransaction.setProduct(request.getProduct());
-        return transactionRepository.save(existingTransaction);
+        return transactionRequest;
     }
 
     @Override

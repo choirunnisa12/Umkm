@@ -1,5 +1,6 @@
 package com.example.umkm.dto.request;
 
+import com.example.umkm.entity.Product;
 import com.example.umkm.entity.Transaction;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,14 +26,18 @@ public class TransactionRequest {
                 .price(price)
                 .quantity(quantity)
                 .totalPrice(totalPrice)
+                .description(description)
+                .dateTransaction(dateTransaction)
                 .build();
     }
-        public Transaction toTransaction() {
-            Transaction transaction = new Transaction();
-            transaction.setPrice(this.price);
-            transaction.setQuantity(this.quantity);
-            transaction.setTotalPrice(this.totalPrice);
-            transaction.setDescription(this.description);
-            return transaction;
+    public Transaction create(Product product) {
+        return Transaction.builder()
+                .price(price)
+                .quantity(quantity)
+                .totalPrice(totalPrice)
+                .description(description)
+                .dateTransaction(dateTransaction)
+                .product(product)
+                .build();
     }
 }
