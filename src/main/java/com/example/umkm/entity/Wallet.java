@@ -17,11 +17,5 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private int balance;
-
-    public Wallet create(){
-        return Wallet.builder()
-                .id(id)
-                .balance(balance)
-                .build();
-    }
+    private String name;
 }

@@ -21,85 +21,78 @@ import java.util.stream.Collectors;
 public class TransactionServiceImpl implements TransactionService {
     private TransactionRepository transactionRepository;
     private ProductRepository productRepository;
+    private WalletRepository walletRepository;
 
     @Override
     public Transaction create(TransactionRequest transactionRequest) {
+        // Find the Wallet by ID
+        Wallet wallet = walletRepository.findById(transactionRequest.getWalletId())
+                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+
+        // Update Wallet Balance
+        wallet.setBalance(wallet.getBalance() + transactionRequest.getTotalPrice());
+        walletRepository.save(wallet);
+
+        // Find the Product by ID
         Product product = productRepository.findById(transactionRequest.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        // Buat transaksi dengan produk
-        Transaction transaction = transactionRequest.create(product);
-
-        // Periksa stok produk
-        if (product.getStock() < transaction.getQuantity()) {
-            throw new RuntimeException("Insufficient stock");
-        }
-
-        // Kurangi stok produk
-        product.setStock(product.getStock() - transaction.getQuantity());
-        productRepository.save(product);
-
-        // Simpan transaksi
+        // Create and save the Transaction
+        Transaction transaction = transactionRequest.create(product, wallet);
         return transactionRepository.save(transaction);
-
-}
-
-    @Override
-    public List<TransactionRequest> getAll() {
-        return transactionRepository.findAll().stream()
-                .map(transaction -> new TransactionRequest(
-                        transaction.getPrice(),
-                        transaction.getQuantity(),
-                        transaction.getTotalPrice(),
-                        transaction.getDescription(),
-                        transaction.getDateTransaction(),
-                        transaction.getProduct().getId()
-                ))
-                .collect(Collectors.toList());    }
-
-    @Override
-    public TransactionRequest getById(int id) {
-        Transaction transaction = transactionRepository.findById(id).orElseThrow();
-        return new TransactionRequest(
-                transaction.getPrice(),
-                transaction.getQuantity(),
-                transaction.getTotalPrice(),
-                transaction.getDescription(),
-                transaction.getDateTransaction(),
-                transaction.getProduct().getId()
-        );
     }
 
     @Override
-    public TransactionRequest update(int id, TransactionRequest transactionRequest) {
-        Transaction transaction = transactionRepository.findById(id).orElseThrow();
+    public List<Transaction> getAll() {
+        return transactionRepository.findAll();
+    }
+
+    @Override
+    public Transaction getById(Integer id) {
+        return transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+    }
+
+    @Override
+    public Transaction update(Integer id, TransactionRequest transactionRequest) {
+        // Find existing Transaction
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        // Find the Wallet and Product
+        Wallet wallet = walletRepository.findById(transactionRequest.getWalletId())
+                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+        Product product = productRepository.findById(transactionRequest.getProductId())
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        // Update Wallet Balance
+        wallet.setBalance(wallet.getBalance() + transactionRequest.getTotalPrice() - transaction.getTotalPrice());
+        walletRepository.save(wallet);
+
+        // Update Transaction
         transaction.setPrice(transactionRequest.getPrice());
         transaction.setQuantity(transactionRequest.getQuantity());
         transaction.setTotalPrice(transactionRequest.getTotalPrice());
         transaction.setDescription(transactionRequest.getDescription());
         transaction.setDateTransaction(transactionRequest.getDateTransaction());
-
-        Product product = productRepository.findById(transactionRequest.getProductId()).orElseThrow();
-        product.setStock(product.getStock() - transactionRequest.getQuantity());
-        productRepository.save(product);
-
         transaction.setProduct(product);
-        transactionRepository.save(transaction);
+        transaction.setWallet(wallet);
 
-        return transactionRequest;
+        return transactionRepository.save(transaction);
     }
 
     @Override
-    public void delete(int id) {
-        Optional<Transaction> transactionOpt = transactionRepository.findById(id);
-        if (transactionOpt.isPresent()) {
-            Transaction transaction = transactionOpt.get();
-            Product product = transaction.getProduct();
-            product.setStock(product.getStock() + transaction.getQuantity()); // Restock product
-            productRepository.save(product);
-            transactionRepository.delete(transaction);
-        } else {
-            throw new RuntimeException("Transaction not found"); // Handle transaction not found scenario
-        }
+    public void delete(Integer id) {
+        // Find the Transaction
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        // Find the Wallet and update its balance
+        Wallet wallet = transaction.getWallet();
+        wallet.setBalance(wallet.getBalance() - transaction.getTotalPrice());
+        walletRepository.save(wallet);
+
+        // Delete the Transaction
+        transactionRepository.delete(transaction);
     }
 }

@@ -2,6 +2,7 @@ package com.example.umkm.dto.request;
 
 import com.example.umkm.entity.Product;
 import com.example.umkm.entity.Transaction;
+import com.example.umkm.entity.Wallet;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +21,7 @@ public class TransactionRequest {
     private String description;
     private LocalDate dateTransaction;
     private int productId; // Tambahkan field ini
+    private int walletId;
 
     public Transaction create() {
         return Transaction.builder()
@@ -30,7 +32,7 @@ public class TransactionRequest {
                 .dateTransaction(dateTransaction)
                 .build();
     }
-    public Transaction create(Product product) {
+    public Transaction create(Product product, Wallet wallet) {
         return Transaction.builder()
                 .price(price)
                 .quantity(quantity)
@@ -38,6 +40,7 @@ public class TransactionRequest {
                 .description(description)
                 .dateTransaction(dateTransaction)
                 .product(product)
+                .wallet(wallet)
                 .build();
     }
 }

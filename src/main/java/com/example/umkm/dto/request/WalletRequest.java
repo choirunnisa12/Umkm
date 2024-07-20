@@ -13,12 +13,16 @@ import lombok.NoArgsConstructor;
     public class WalletRequest {
     private int id;
 
-    @Schema(description = "Balance of the wallet", example = "10000")
+    @Schema(description = "Name of the wallet", example = "Main Wallet")
     private int balance;
+    private String name;
 
-    public WalletRequest(){}
-    public WalletRequest(int balance) {
-        this.balance = balance;
+    public Wallet create() {
+        return Wallet.builder()
+                .id(id)
+                .balance(balance)
+                .name(name)
+                .build();
     }
 }
 

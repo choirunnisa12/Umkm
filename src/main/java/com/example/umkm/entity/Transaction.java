@@ -28,7 +28,7 @@ public class Transaction {
     private Product product;
 
     @ManyToOne
-    @JoinColumn(name = "wallet_id")
+    @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
 
     @PrePersist
