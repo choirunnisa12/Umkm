@@ -27,7 +27,7 @@ public class TransactionRequest {
         return Transaction.builder()
                 .price(price)
                 .quantity(quantity)
-                .totalPrice(totalPrice)
+                .totalPrice(price * quantity)
                 .description(description)
                 .dateTransaction(dateTransaction)
                 .build();
@@ -36,7 +36,7 @@ public class TransactionRequest {
         return Transaction.builder()
                 .price(price)
                 .quantity(quantity)
-                .totalPrice(totalPrice)
+                .totalPrice(price * quantity)
                 .description(description)
                 .dateTransaction(dateTransaction)
                 .product(product)

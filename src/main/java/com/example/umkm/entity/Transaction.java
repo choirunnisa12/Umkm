@@ -31,10 +31,20 @@ public class Transaction {
     @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
 
-    @PrePersist
-    public void prePersist() {
-        if (totalPrice == null) {
-            totalPrice = price * quantity;
+    public void setPrice(Integer price) {
+        this.price = price;
+        calculateTotalPrice();
+    }
+
+    // Setter for quantity
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+        calculateTotalPrice();
+    }
+
+    private void calculateTotalPrice() {
+        if (this.price != null && this.quantity != null) {
+            this.totalPrice = this.price * this.quantity;
         }
     }
 }

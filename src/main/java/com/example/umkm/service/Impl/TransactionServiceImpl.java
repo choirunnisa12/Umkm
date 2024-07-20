@@ -8,91 +8,77 @@ import com.example.umkm.repository.ProductRepository;
 import com.example.umkm.repository.TransactionRepository;
 import com.example.umkm.repository.WalletRepository;
 import com.example.umkm.service.TransactionService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
-    private TransactionRepository transactionRepository;
-    private ProductRepository productRepository;
-    private WalletRepository walletRepository;
+    private final TransactionRepository transactionRepository;
+    private final ProductRepository productRepository;
+    private final WalletRepository walletRepository;
 
     @Override
-    public Transaction create(TransactionRequest transactionRequest) {
-        // Find the Wallet by ID
-        Wallet wallet = walletRepository.findById(transactionRequest.getWalletId())
-                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+    @Transactional
+    public Transaction create(TransactionRequest request) {
+        Optional<Product> productOpt = productRepository.findById(request.getProductId());
+        Optional<Wallet> walletOpt = walletRepository.findById(request.getWalletId());
 
-        // Update Wallet Balance
-        wallet.setBalance(wallet.getBalance() + transactionRequest.getTotalPrice());
-        walletRepository.save(wallet);
+        if (productOpt.isPresent() && walletOpt.isPresent()) {
+            Product product = productOpt.get();
+            Wallet wallet = walletOpt.get();
 
-        // Find the Product by ID
-        Product product = productRepository.findById(transactionRequest.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+            // Mengurangi stok produk
+            product.setStock(product.getStock() - request.getQuantity());
+            productRepository.save(product);
 
-        // Create and save the Transaction
-        Transaction transaction = transactionRequest.create(product, wallet);
-        return transactionRepository.save(transaction);
+            // Memperbarui saldo wallet
+            wallet.setBalance(wallet.getBalance() + (request.getPrice() * request.getQuantity()));
+            walletRepository.save(wallet);
+
+            // Membuat transaksi
+            Transaction transaction = request.create(product, wallet);
+            return transactionRepository.save(transaction);
+        }
+        throw new RuntimeException("Product or Wallet not found");
     }
-
     @Override
+    @Transactional
     public List<Transaction> getAll() {
         return transactionRepository.findAll();
     }
 
     @Override
-    public Transaction getById(Integer id) {
-        return transactionRepository.findById(id)
+    @Transactional
+    public Transaction update(Transaction request) {
+        Transaction existingTransaction = transactionRepository.findById(request.getId())
                 .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        existingTransaction.setPrice(request.getPrice());
+        existingTransaction.setQuantity(request.getQuantity());
+        existingTransaction.setTotalPrice(request.getPrice() * request.getQuantity());
+        existingTransaction.setDescription(request.getDescription());
+        existingTransaction.setDateTransaction(request.getDateTransaction());
+        existingTransaction.setProduct(request.getProduct());
+
+        return transactionRepository.save(existingTransaction);
     }
 
     @Override
-    public Transaction update(Integer id, TransactionRequest transactionRequest) {
-        // Find existing Transaction
+    @Transactional
+    public void delete(int id) {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transaction not found"));
 
-        // Find the Wallet and Product
-        Wallet wallet = walletRepository.findById(transactionRequest.getWalletId())
-                .orElseThrow(() -> new RuntimeException("Wallet not found"));
-        Product product = productRepository.findById(transactionRequest.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+        Product product = transaction.getProduct();
+        product.setStock(product.getStock() + transaction.getQuantity());
+        productRepository.save(product);
 
-        // Update Wallet Balance
-        wallet.setBalance(wallet.getBalance() + transactionRequest.getTotalPrice() - transaction.getTotalPrice());
-        walletRepository.save(wallet);
-
-        // Update Transaction
-        transaction.setPrice(transactionRequest.getPrice());
-        transaction.setQuantity(transactionRequest.getQuantity());
-        transaction.setTotalPrice(transactionRequest.getTotalPrice());
-        transaction.setDescription(transactionRequest.getDescription());
-        transaction.setDateTransaction(transactionRequest.getDateTransaction());
-        transaction.setProduct(product);
-        transaction.setWallet(wallet);
-
-        return transactionRepository.save(transaction);
-    }
-
-    @Override
-    public void delete(Integer id) {
-        // Find the Transaction
-        Transaction transaction = transactionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
-
-        // Find the Wallet and update its balance
-        Wallet wallet = transaction.getWallet();
-        wallet.setBalance(wallet.getBalance() - transaction.getTotalPrice());
-        walletRepository.save(wallet);
-
-        // Delete the Transaction
         transactionRepository.delete(transaction);
     }
 }
