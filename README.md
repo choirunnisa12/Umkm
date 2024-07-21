@@ -149,7 +149,7 @@ This UMKM application is designed to help small businesses manage their finances
 
 - **Request**:
     - **Method**: GET
-    - **Endpoint**: `products/low-stock?stockThreshold=10
+    - **Endpoint**: `products/low-stock?stockThreshold=15
       `
 
 - **Response**:
