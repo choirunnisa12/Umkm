@@ -145,7 +145,7 @@ This UMKM application is designed to help small businesses manage their finances
         "message": "Product deleted successfully"
       }
       ``` 
-      #### 6 LowStock
+  #### 6 LowStock
 
 - **Request**:
     - **Method**: GET
@@ -320,7 +320,7 @@ This UMKM application is designed to help small businesses manage their finances
       
       ```
 
-#### 5. Delete Transaction
+#### 4. Delete Transaction
 
 - **Request**:
     - **Method**: DELETE
