@@ -11,4 +11,5 @@ public interface WalletService {
     WalletRequest getById(int id);
     WalletRequest update(int id, WalletRequest walletRequest);
     void delete(int id);
+    List<Wallet> getWalletsBelowBalance(int balanceThreshold);
 }

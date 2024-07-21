@@ -6,14 +6,17 @@ import com.example.umkm.service.TransactionService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
+
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/transactions")
 @AllArgsConstructor
 public class TransactionController {
-    private final TransactionService transactionService;
+    private TransactionService transactionService;
 
     @PostMapping
     public ResponseEntity<Transaction> create(@RequestBody TransactionRequest request) {
@@ -37,5 +40,20 @@ public class TransactionController {
     public ResponseEntity<String> delete(@PathVariable int id) {
         transactionService.delete(id);
         return ResponseEntity.ok("Successfully deleted");
+    }
+
+    @GetMapping("/date-range")
+    public ResponseEntity<List<Transaction>> getTransactionsByDateRange(
+            @RequestParam("startDate") LocalDate startDate,
+            @RequestParam("endDate") LocalDate endDate) {
+        List<Transaction> transactions = transactionService.getTransactionsByDateRange(startDate, endDate);
+        return new ResponseEntity<>(transactions, HttpStatus.OK);
+    }
+
+    @GetMapping("/price")
+    public ResponseEntity<List<Transaction>> getTransactionsByPriceGreaterThan(
+            @RequestParam("priceThreshold") int priceThreshold) {
+        List<Transaction> transactions = transactionService.getTransactionsByPriceGreaterThan(priceThreshold);
+        return new ResponseEntity<>(transactions, HttpStatus.OK);
     }
 }

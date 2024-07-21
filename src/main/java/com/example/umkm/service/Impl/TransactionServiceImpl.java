@@ -117,4 +117,13 @@ public class TransactionServiceImpl implements TransactionService {
 
         transactionRepository.delete(transaction);
     }
+    @Override
+    public List<Transaction> getTransactionsByDateRange(LocalDate startDate, LocalDate endDate) {
+        return transactionRepository.findByDateBetween(startDate, endDate);
+    }
+
+    @Override
+    public List<Transaction> getTransactionsByPriceGreaterThan(int priceThreshold) {
+        return transactionRepository.findByPriceGreaterThan(priceThreshold);
+    }
 }

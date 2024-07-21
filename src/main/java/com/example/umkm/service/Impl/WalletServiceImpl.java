@@ -65,4 +65,8 @@ public class WalletServiceImpl implements WalletService {
                 .orElseThrow(() -> new RuntimeException("Wallet not found"));
         walletRepository.delete(wallet);
     }
+    @Override
+    public List<Wallet> getWalletsBelowBalance(int balanceThreshold) {
+        return walletRepository.findByBalanceLessThan(balanceThreshold);
+    }
 }

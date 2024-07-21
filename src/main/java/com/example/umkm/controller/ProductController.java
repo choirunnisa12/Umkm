@@ -2,6 +2,7 @@ package com.example.umkm.controller;
 
 import com.example.umkm.entity.Product;
 import com.example.umkm.service.ProductService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +10,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
@@ -18,25 +21,48 @@ public class ProductController {
     private ProductService productService;
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody Product request) {
+    public ResponseEntity<Map<String, Object>> create(@RequestBody Product request) {
         Product create = productService.create(request);
+        Map<String, Object> response = new HashMap<>();
         if (create != null) {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(create);
+            response.put("message", "Product created successfully");
+            response.put("data", create);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to create product");
+            response.put("message", "Failed to create product");
+            response.put("data", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
     @GetMapping
-    public List<Product> getAll() {
-        return productService.getAll();
+    public ResponseEntity<Map<String, Object>> getAll() {
+        List<Product> products = productService.getAll();
+        Map<String, Object> response = new HashMap<>();
+        if (!products.isEmpty()) {
+            response.put("message", "Products retrieved successfully");
+            response.put("data", products);
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("message", "No products found");
+            response.put("data", null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
     }
 
     @GetMapping("/{id}")
-    public Product getById(@PathVariable Integer id) {
-        return productService.getById(id);
+    public ResponseEntity<Map<String, Object>> getById(@PathVariable Integer id) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Product product = productService.getById(id);
+            response.put("message", "Product retrieved successfully");
+            response.put("data", product);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            response.put("message", "Product not found");
+            response.put("data", null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
     }
 
     @PutMapping(path = "/{id}")
