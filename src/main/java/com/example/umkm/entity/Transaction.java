@@ -36,7 +36,6 @@ public class Transaction {
         calculateTotalPrice();
     }
 
-    // Setter for quantity
     public void setQuantity(int quantity) {
         this.quantity = quantity;
         calculateTotalPrice();
