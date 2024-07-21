@@ -16,10 +16,10 @@ import java.time.LocalDate;
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-    private Integer price;
-    private Integer quantity;
-    private Integer totalPrice;
+    private int id;
+    private int price;
+    private int quantity;
+    private int totalPrice;
     private String description;
     private LocalDate dateTransaction;
 
@@ -31,20 +31,18 @@ public class Transaction {
     @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
 
-    public void setPrice(Integer price) {
+    public void setPrice(int price) {
         this.price = price;
         calculateTotalPrice();
     }
 
     // Setter for quantity
-    public void setQuantity(Integer quantity) {
+    public void setQuantity(int quantity) {
         this.quantity = quantity;
         calculateTotalPrice();
     }
 
-    private void calculateTotalPrice() {
-        if (this.price != null && this.quantity != null) {
-            this.totalPrice = this.price * this.quantity;
-        }
+    public void calculateTotalPrice() {
+        this.totalPrice = this.price * this.quantity;
     }
 }

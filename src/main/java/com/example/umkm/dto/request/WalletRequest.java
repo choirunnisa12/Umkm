@@ -13,8 +13,9 @@ import lombok.NoArgsConstructor;
     public class WalletRequest {
     private int id;
 
-    @Schema(description = "Name of the wallet", example = "Main Wallet")
+    @Schema(description = "Name of the wallet", example = "Bank")
     private int balance;
+    @Schema(description = "Name of the wallet", example = "Bank BCA")
     private String name;
 
     public Wallet create() {

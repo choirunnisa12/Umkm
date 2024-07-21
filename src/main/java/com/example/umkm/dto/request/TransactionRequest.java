@@ -15,9 +15,9 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TransactionRequest {
-    private Integer price;
-    private Integer quantity;
-    private Integer totalPrice;
+    private int price;
+    private int quantity;
+    private int totalPrice;
     private String description;
     private LocalDate dateTransaction;
     private int productId; // Tambahkan field ini

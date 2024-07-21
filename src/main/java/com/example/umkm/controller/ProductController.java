@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @RestController
@@ -50,9 +51,14 @@ public class ProductController {
         return ResponseEntity.ok("Product deleted successfully");
     }
     @GetMapping("/expiring")
-    public List<Product> getExpiringProducts(@RequestParam("thresholdDate") String thresholdDate) {
-        LocalDate date = LocalDate.parse(thresholdDate);
-        return productService.getExpiringProducts(date);
+    public ResponseEntity<List<Product>> getExpiringProducts(@RequestParam("thresholdDate") String thresholdDate) {
+        try {
+            LocalDate date = LocalDate.parse(thresholdDate);
+            List<Product> products = productService.getExpiringProducts(date);
+            return ResponseEntity.ok(products);
+        } catch (DateTimeParseException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     @GetMapping("/search")
@@ -60,8 +66,8 @@ public class ProductController {
         return productService.search(name);
     }
 
-    @GetMapping("/lowstock")
-    public List<Product> findByStockLessThan(@RequestParam("stockThreshold") Integer stockThreshold) {
+    @GetMapping("/low-stock")
+    public List<Product> getLowStockProducts(@RequestParam Integer stockThreshold) {
         return productService.getLowStockProducts(stockThreshold);
     }
 }

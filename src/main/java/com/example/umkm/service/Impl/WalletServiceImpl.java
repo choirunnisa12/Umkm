@@ -16,15 +16,16 @@ public class WalletServiceImpl implements WalletService {
 
     public WalletServiceImpl(WalletRepository walletRepository) {
         this.walletRepository = walletRepository;
+
     }
     @Override
     public Wallet create(WalletRequest walletRequest) {
         Wallet wallet = Wallet.builder()
                 .name(walletRequest.getName())
-                .balance(0) // Set initial balance to 0
                 .build();
         return walletRepository.save(wallet);
     }
+
     @Override
     public List<WalletRequest> getAll() {
         return walletRepository.findAll().stream()
@@ -51,10 +52,10 @@ public class WalletServiceImpl implements WalletService {
                 .orElseThrow(() -> new RuntimeException("Wallet not found"));
         wallet.setName(walletRequest.getName());
         wallet.setBalance(walletRequest.getBalance());
-        Wallet updatedWallet = walletRepository.save(wallet);
+        Wallet updateWallet = walletRepository.save(wallet);
         return WalletRequest.builder()
-                .id(updatedWallet.getId())
-                .name(updatedWallet.getName())
+                .id(updateWallet.getId())
+                .name(updateWallet.getName())
                 .build();
     }
 

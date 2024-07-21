@@ -16,6 +16,6 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     @Query(value = "SELECT * FROM Product p WHERE p.stock < :stockThreshold", nativeQuery = true)
     List<Product> findByStockLessThan(@Param("stockThreshold") Integer stockThreshold);
 
-    @Query(value = "SELECT * FROM Product p WHERE p.expire_date < :thresholdDate", nativeQuery = true)
+    @Query(value = "SELECT * FROM products p WHERE p.expire_date < :thresholdDate", nativeQuery = true)
     List<Product> findByExpireDateBefore(@Param("thresholdDate") LocalDate thresholdDate);
 }

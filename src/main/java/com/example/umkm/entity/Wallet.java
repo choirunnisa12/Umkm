@@ -18,4 +18,6 @@ public class Wallet {
     private int id;
     private int balance;
     private String name;
+
+
 }

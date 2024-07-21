@@ -8,11 +8,12 @@ import com.example.umkm.repository.ProductRepository;
 import com.example.umkm.repository.TransactionRepository;
 import com.example.umkm.repository.WalletRepository;
 import com.example.umkm.service.TransactionService;
-import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,60 +25,95 @@ public class TransactionServiceImpl implements TransactionService {
     private final WalletRepository walletRepository;
 
     @Override
-    @Transactional
     public Transaction create(TransactionRequest request) {
-        Optional<Product> productOpt = productRepository.findById(request.getProductId());
-        Optional<Wallet> walletOpt = walletRepository.findById(request.getWalletId());
+        Optional<Product> productNew = productRepository.findById(request.getProductId());
+        Optional<Wallet> walletNew = walletRepository.findById(request.getWalletId());
 
-        if (productOpt.isPresent() && walletOpt.isPresent()) {
-            Product product = productOpt.get();
-            Wallet wallet = walletOpt.get();
+        if (productNew.isPresent() && walletNew.isPresent()) {
+            Product product = productNew.get();
+            Wallet wallet = walletNew.get();
 
-            // Mengurangi stok produk
-            product.setStock(product.getStock() - request.getQuantity());
+            // untuk Mengurangi stok produk, kalau stok <0 stok tidak cukup
+            int newStock = product.getStock() - request.getQuantity();
+            if (newStock < 0) {
+                throw new RuntimeException("Not enough stock");
+            }
+            product.setStock(newStock);
             productRepository.save(product);
 
-            // Memperbarui saldo wallet
-            wallet.setBalance(wallet.getBalance() + (request.getPrice() * request.getQuantity()));
+            // untuk Membuat transaksi
+            Transaction transaction = new Transaction();
+            transaction.setPrice(request.getPrice());
+            transaction.setQuantity(request.getQuantity());
+            transaction.setDescription(request.getDescription());
+            transaction.setDateTransaction(LocalDate.now());
+            transaction.setProduct(product);
+            transaction.setWallet(wallet);
+            transaction.calculateTotalPrice();
+
+            // Menambah saldo wallet
+            int TotalAdd = transaction.getTotalPrice();
+            wallet.setBalance(wallet.getBalance() + TotalAdd);
             walletRepository.save(wallet);
 
-            // Membuat transaksi
-            Transaction transaction = request.create(product, wallet);
+            System.out.println("Updating wallet balance: " + wallet.getBalance());
+            walletRepository.save(wallet);
+
             return transactionRepository.save(transaction);
         }
         throw new RuntimeException("Product or Wallet not found");
     }
+
+    //untuk melihat list semua transaksi
     @Override
-    @Transactional
     public List<Transaction> getAll() {
         return transactionRepository.findAll();
     }
 
+    //untuk update  transaksi
     @Override
-    @Transactional
     public Transaction update(Transaction request) {
-        Transaction existingTransaction = transactionRepository.findById(request.getId())
+        Transaction currentTransaction = transactionRepository.findById(request.getId())
                 .orElseThrow(() -> new RuntimeException("Transaction not found"));
 
-        existingTransaction.setPrice(request.getPrice());
-        existingTransaction.setQuantity(request.getQuantity());
-        existingTransaction.setTotalPrice(request.getPrice() * request.getQuantity());
-        existingTransaction.setDescription(request.getDescription());
-        existingTransaction.setDateTransaction(request.getDateTransaction());
-        existingTransaction.setProduct(request.getProduct());
+        Product product = currentTransaction.getProduct();
+        Wallet wallet = currentTransaction.getWallet();
 
-        return transactionRepository.save(existingTransaction);
+        product.setStock(product.getStock() + currentTransaction.getQuantity());
+        wallet.setBalance(wallet.getBalance() - currentTransaction.getTotalPrice());
+
+        // Memperbarui transaksi dengan data terbaru
+        product.setStock(product.getStock() - request.getQuantity());
+        currentTransaction.setPrice(request.getPrice());
+        currentTransaction.setQuantity(request.getQuantity());
+        currentTransaction.calculateTotalPrice();
+        currentTransaction.setDescription(request.getDescription());
+        currentTransaction.setDateTransaction(request.getDateTransaction());
+        currentTransaction.setProduct(request.getProduct());
+        currentTransaction.setWallet(request.getWallet());
+
+        // Menambah saldo wallet dan mengurangi stok produk dengan data terbaru
+        wallet.setBalance(wallet.getBalance() + currentTransaction.getTotalPrice());
+        productRepository.save(product);
+        walletRepository.save(wallet);
+
+        return transactionRepository.save(currentTransaction);
     }
 
     @Override
-    @Transactional
     public void delete(int id) {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transaction not found"));
 
         Product product = transaction.getProduct();
+        Wallet wallet = transaction.getWallet();
+
         product.setStock(product.getStock() + transaction.getQuantity());
         productRepository.save(product);
+
+        // untuk mengurangi saldo wallet
+        wallet.setBalance(wallet.getBalance() - transaction.getTotalPrice());
+        walletRepository.save(wallet);
 
         transactionRepository.delete(transaction);
     }
